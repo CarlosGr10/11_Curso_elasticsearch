@@ -30,4 +30,86 @@ En un nodo se puede tener un segmento de información principal y las replicas d
 
 - Las replicas son los backups de las piezas primarias que se guardan en los nodos donde no se encuentra la pieza primaria.
 
+# Poner a correr Elasticsearch
+
+## Paso 1 - Instalar Postman
+
+Para instalar Postman accedes a la URL https://www.postman.com/downloads/ la cual te provee con el instalador de tu sistema operativo.
+
+## Paso 2 - Crear archivo de configuración
+
+Para crear el archivo de configuración te recomiendo utilices un directorio personalizado para este curso, en el cual puedas guardar todos los archivos que usarás. Entonces lo primero será crear este directorio y entrar en él.
+
+Nota: los siguientes comandos se deben ejecutar en una terminal
+
+```
+mkdir curso-elastic
+```
+
+```
+cd curso-elastic
+```
+
+Ahora abres un editor de texto (te recomiendo Visual Studio Code) y creas un archivo dentro de este directorio. El nombre del archivo es docker-compose.yml
+
+```
+touch docker-compose.yml
+```
+
+Una vez creado el archivo, le vas a agregar la siguiente configuración:
+
+```
+version: '2.2'
+services:
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.0
+    container_name: es01
+    environment:
+      - node.name=es01
+      - cluster.name=es-docker-cluster
+      - cluster.initial_master_nodes=es01
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data01:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - elastic
+
+volumes:
+  data01:
+    driver: local
+
+networks:
+  elastic:
+    driver: bridge
+```
+
+Este archivo es basado en las configuraciones recomendadas para correr Elasticsearch con Docker. Esta guía se puede consultar en https://www.elastic.co/guide/en/elasticsearch/reference/7.6/docker.html.
+
+Acá un breve repaso de lo que hace este archivo:
+
+Le dice a Docker que use la imagen de Elasticsearch con versión 7.6.0. Esta es la versión que vas a usar durante el curso.
+- Le dice que el nombre del contenedor será es01.
+- Le indica unas configuraciones para crear el cluster y el nodo por defecto.
+- Le indica que el puerto sobre el que corre Elasticsearch es el 9200. A su vez le dice que exponga ese mismo puerto a tu máquina para que puedas usar el servicio bajo el puerto estándar.
+
+Por último guardamos el archivo.
+
+# Paso 3 - Levantar el servicio
+Luego de tener el archivo listo, le dices a Docker que levante el servicio ejecutando el siguiente comando:
+
+```
+docker-compose up
+```
+
+Este comando se encarga de ejecutar las directivas que especificamos en el archivo dejando el servicio de Elasticsearch funcionando correctamente en el puerto 9200. Esto puede tomar unos segundos mientras se configura el contenedor y se levanta el servicio.
+
+Para comprobar que Elasticsearch ya está corriendo sobre tu máquina, abres Postman y ejecutas un GET sobre la url http://localhost:9200. Si todo salió, correctamente verás un resultado similar a este:
+
 
