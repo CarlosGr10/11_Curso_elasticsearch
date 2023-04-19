@@ -381,4 +381,276 @@ minimum_should_match = 1 (defecto) [Al estar sola almenos una condicion debe de 
 }
 ```
 
+# Consultas compuestas
+
+Para condiciones mas elaboradas , podemos componer consultas booleanas para lograr el resultado
+
+Ejercicio:
+
+![](https://i.imgur.com/Ze3I9y3.png)
+
+Asi se representa en elasticsearch
+
+![](https://i.imgur.com/PlR6SMg.png)
+
+En codigo 
+
+![](https://i.imgur.com/afBplxR.png)
+
+# Construyendo una consulta compuesta
+
+```python
+{
+    "query": {
+        "bool": {
+            "must": [
+                {
+                    "bool": {
+                        "should": [
+                            {"term": {"estado": "activo"}},
+                            {"term": {"estado": "pendiente"}}
+                        ]
+                    }
+                },
+                {
+                    "bool": {
+                        "should": [
+                            {"match": {"ultimaModificacion.usuario": "mail.com"}},
+                            {"match": {"ultimaModificacion.usuario": "vendor.com"}}
+                        ]
+                    }
+                },
+                {
+                    "term": {"pedidosUltimaHora":0}
+                }
+            ]
+        }
+    }
+}
+```
+
+# Consultas anidadas
+
+- Guardad una lista de objetos dentro de un documento (pertenencia)
+- Esta consulta encuentra los documenyos usando sus objetos anidados
+- Al encontrar una coincidencia el documento raiz es devuelto
+
+```python
+PUT localhost:9200/restaurantes
+
+{
+  "mappings":{
+    "properties":{
+      "nombre":{ "type":"text" },
+      "categorias" : {
+        "type" : "nested",
+        "properties": {
+          "nombre": { "type" : "keyword" },
+          "principal": { "type" : "boolean" }
+        }
+      }
+    }
+  }
+}
+```
+
+Agreguemos restaurantes
+
+```python
+PUT /restaurantes/_doc/1
+{
+  "nombre": "McDonalds",
+  "categorias": [
+    { "nombre": "Comida Rápida", "principal": true },
+    { "nombre": "Desayunos", "principal": false },
+    { "nombre": "Hamburguesas", "principal": false }
+  ]
+}
+
+PUT /restaurantes/_doc/2
+{
+  "nombre": "Burger King",
+  "categorias": [
+    { "nombre": "Comida Rápida", "principal": false },
+    { "nombre": "Hamburguesas", "principal": true }
+  ]
+}
+
+PUT /restaurantes/_doc/3
+{
+  "nombre": "Subway",
+  "categorias": [
+    { "nombre": "Comida Saludable", "principal": false },
+    { "nombre": "Sándwiches", "principal": true }
+  ]
+}
+```
+
+Busquedas elastic
+
+```python
+Búsqueda No. 1: Categoria=Comida Saludable
+GET localhost:9200/restaurantes/_search
+{
+  "query": {
+    "nested": {
+      "path": "categorias",
+      "query": {
+        "bool": {
+          "must": {
+            "term": { "categorias.nombre": "Comida Saludable" }
+          }
+        }
+      }
+    }
+  }
+}
+Búsqueda No. 2: Categoria=Comida Rápida
+GET localhost:9200/restaurantes/_search
+{
+  "query": {
+    "nested": {
+      "path": "categorias",
+      "query": {
+        "bool": {
+          "must": {
+            "term": { "categorias.nombre": "Comida Rápida" }
+          }
+        }
+      }
+    }
+  }
+}
+Búsqueda No. 3: Categoria=Comida Rápida, principal=true
+GET localhost:9200/restaurantes/_search
+{
+  "query": {
+    "nested": {
+      "path": "categorias",
+      "query": {
+        "bool": {
+          "must": [
+            { "term": { "categorias.nombre": "Comida Rápida" } },
+            { "term": { "categorias.principal": true } }
+          ]
+        }
+      }
+    }
+  }
+}
+```
+
+# Proyecto: unificación de datos
+
+### Mapeamos las colecciones
+
+```python
+localhost:9200/restaurantes/_mapping
+
+localhost:9200/platos/_mapping
+```
+
+### Actualizamos restaurantes con platos y nuevos campos
+
+El campo de tipo anidado es "nested"
+
+```python
+PUT localhost:9200/restaurantes/_mapping
+
+{
+  "properties":{
+    "calificacion": { "type": "double" },
+    "direccion": { "type": "text" },
+    "platos": {
+      "type": "nested",
+      "properties": {
+        "descripcion": { "type": "text" },
+        "estado": { "type": "keyword" },
+        "nombre": { "type": "text" },
+        "pedidosUltimaHora": { "type": "integer" }
+      }
+    },
+    "ultimaModificacion": {
+      "properties": {
+        "usuario": { "type": "text" },
+        "fecha": { "type": "date" }
+      }
+    }
+  }
+}
+
+```
+
+### Actualizamos restaurantes existentes con POST y _update
+
+```python
+POST localhost:9200/restaurantes/_update/1
+
+{
+  "doc": {
+    "calificacion": 4.22,
+    "direccion": "Calle Primera, Barrio Centro",
+    "platos": [
+      {
+        "nombre": "Bowl Picante",
+        "descripcion": "Pollo, salsa picante, frijoles negros, plátano maduro y aguacate.",
+        "estado": "activo",
+        "pedidosUltimaHora": 42
+      }
+    ],
+    "ultimaModificacion": {
+      "usuario": "rick@mail.com",
+      "fecha": "2020-02-19"
+    }
+  }
+}
+```
+
+```python
+POST localhost:9200/restaurantes/_update/2
+
+{
+  "doc": {
+    "calificacion": 3.75,
+    "direccion": "Carrera Segunda, Barrio Occidental",
+    "platos": [
+      {
+        "nombre": "Nachos XL",
+        "descripcion": "Nachos con carne moplida, guacamole, pico de gallo, salsa picante, queso chedar y frijoles negros",
+        "estado": "activo",
+        "pedidosUltimaHora": 11
+      }
+    ],
+    "ultimaModificacion": {
+      "usuario": "jerry@mail.com",
+      "fecha": "2020-03-01"
+    }
+  }
+}
+```
+
+SUBWAY SIN CALIFICACIÓN
+
+```python
+POST localhost:9200/restaurantes/_update/3
+
+{
+  "doc": {
+    "direccion": "Carrera Tercera, Barrio Norte",
+    "platos": [
+      {
+        "nombre": "Ensaladísima",
+        "descripcion": "Aceitunas, cebolla, queso, pimentón, tomate cherry, aguacate. (vegetariano y saludable)",
+        "estado": "activo",
+        "pedidosUltimaHora": 0
+      }
+    ],
+    "ultimaModificacion": {
+      "usuario": "rick@mail.com",
+      "fecha": "2020-01-22"
+    }
+  }
+}
+```
+
 
