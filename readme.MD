@@ -59,17 +59,14 @@ touch docker-compose.yml
 Una vez creado el archivo, le vas a agregar la siguiente configuración:
 
 ```
-version: '2.2'
+version: '3.7'
 services:
-  es01:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.0
-    container_name: es01
+  elasticsearch:
+    restart: always
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.0
+    container_name: elasticsearch
     environment:
-      - node.name=es01
-      - cluster.name=es-docker-cluster
-      - cluster.initial_master_nodes=es01
-      - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
     ulimits:
       memlock:
         soft: -1
@@ -139,9 +136,9 @@ Borrando todo el indice / coleccion de datos
 
 - Para texto: Text y keyword
 
-TEXT: Busquedas de texto completas (match)
+**TEXT**: Busquedas de texto completas **(match)**
 
-KEYWORD: valores exactos (term)
+**KEYWORD**: valores exactos **(term)**
 
 ## Tipos de datos
 
@@ -264,7 +261,7 @@ PUT localhost:9200/platos/_doc/3
 
 
 ```python
-localhost:9200/platos/_search
+GET localhost:9200/platos/_search
 
 {
     "query":{
@@ -274,4 +271,114 @@ localhost:9200/platos/_search
 ```
 
 En el documento vemos la palabra reservada "_score", que entre mas alto , coincide mas con los resultados
+
+```python
+{
+    "query":{
+        "simple_query_string": {
+        "query": "gallo",
+        "fields": ["nombre^2", "descripcion"]
+        }
+    }
+}
+```
+
+Para darle mas peso a una busqueda en un campo utilizamos la sig. estructura "^2" despues de un campo 
+
+
+# Tipos de cláusulas
+
+**Must, Filter,Should & Must Not**
+
+- Para una consulta:
+usar {} (un objeto)
+
+- Para ,as de una consulta
+Usar [] (una lista de objetos)
+
+**MUST**<br>
+
+- Funciona como un AND logico
+- La consulta debe de aparecer en los documentos retornados
+- Influye en el puntaje
+
+**FILTER**<br>
+
+- Funciona como un AND logico tambien
+- La consulta debe de aparecer en los documentos retornados
+- **No** influye en el **puntaje**
+- Usar Filter en vez de Must, si no nos interesa el puntaje
+- Permite cache
+
+**SHOULD**
+
+- Funciona como un OR logico
+- Alguna de las consultas deberia aparecer en los documentos retornados
+- Influye en el puntaje
+- **minimum_should_match** permite alterar el comprtamiento, Cuantas consultas deben coincidir 
+
+**NOTA:** Si Must o Filter (AND) estan presentes en la consulta booleana
+
+minimum_should_match = 0 (defecto) [should se vulve opcional]
+
+De lo contario
+
+minimum_should_match = 1 (defecto) [Al estar sola almenos una condicion debe de cumplirse]
+
+**Must Not**
+- Funciona como un NOT logico
+- La consulta no debe aoarecer en los documentos retornados 
+- No influye en el puntaje
+- Permite cache
+
+# Consultas booleanas
+
+```python
+{
+    "query": {
+        "bool": {
+            "must": {
+                "match": {"descripcion":"picante"}
+            },
+            "filter": {
+                "term": {"estado": "activo"}
+            },
+            "must_not": {
+                "term": {"pedidosUltimaHora": 0}
+            },  
+            "should": [
+                {"match":{"descripcion":"aguacate"}},
+                {"match":{"descripcion":"guacamole"}}
+            ],
+            "minimum_should_match": 1
+        }
+    }
+}
+```
+
+"Term" es un valor exacto 
+"Match" busca en la toda cadena
+
+```python
+{
+    "query": {
+        "bool": {
+            "must": [
+               {"match": {"descripcion":"picante"}},
+                {"term": {"estado": "activo"}}
+            ],
+            "must_not": {
+                "term": {"pedidosUltimaHora": 0}
+            },  
+            "should": [
+                {"match":{"descripcion":"aguacate"}},
+                {"match":{"descripcion":"guacamole"}},
+                {"match":{"descripcion":"pico"}}
+            ],
+            "minimum_should_match": 1
+        }
+    }
+}
+```
+
 
