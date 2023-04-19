@@ -237,3 +237,41 @@ PUT localhost:9200/platos/_doc/2
   }
 }
 ```
+
+# Puntaje
+
+- Que tan bien coincide un documento con la busqueda
+
+- Algoritmo verifica
+numero de concurrencias / unicidad de palabras
+
+- Los resultados vienen ordenados por defecto usando dicho puntaje
+
+```python
+PUT localhost:9200/platos/_doc/3
+
+{
+    "nombre": "Nachos XL",
+    "descripcion": "Nachos de carne, pico de gallo",
+    "estado": "activo",
+    "pedidosUltimaHora": 11 ,
+    "ultimaModificacion": {
+        "usuario": "jeery@gmail.com",
+        "fecha": "2020-01-22"
+    }
+}
+```
+
+
+```python
+localhost:9200/platos/_search
+
+{
+    "query":{
+        "simple_query_string": {"query":"Nachos XL"}
+    }
+}
+```
+
+En el documento vemos la palabra reservada "_score", que entre mas alto , coincide mas con los resultados
+
