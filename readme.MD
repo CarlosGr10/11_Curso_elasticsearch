@@ -113,3 +113,127 @@ Este comando se encarga de ejecutar las directivas que especificamos en el archi
 Para comprobar que Elasticsearch ya está corriendo sobre tu máquina, abres Postman y ejecutas un GET sobre la url http://localhost:9200. Si todo salió, correctamente verás un resultado similar a este:
 
 
+**DELETE**
+
+```python
+PUT localhost:9200/usuarios_falsos/_doc/1
+```
+
+Creamos una nueva coleccion de datos (POST)
+
+```python
+DELETE localhost:9200/usuarios_falsos/_doc/1
+```
+
+Borrando un dato
+
+```python
+DELETE localhost:9200/usuarios_falsos/
+```
+
+Borrando todo el indice / coleccion de datos
+
+# Mapeo de datos
+
+- Para rendimiento optimo , indicar un mapeo explicito
+
+- Para texto: Text y keyword
+
+TEXT: Busquedas de texto completas (match)
+
+KEYWORD: valores exactos (term)
+
+## Tipos de datos
+
+TEXTO: text, key
+
+FECHAS: date
+
+NUMEROS: integer, long, float, double
+
+BOOLEANOS: boolean
+
+OBJETOS: object, nested
+
+GEOGRAFICOS: geo_point, geo_shape
+
+### Creando nuestro modelo
+
+```python
+PUT localhost:9200/platos
+
+{
+    "mappings": {
+        "properties": {
+            "nombre": {"type": "text"},
+            "descripción": {"type": "text"},
+            "pedidosUltimaHora": {"type": "integer"},
+            "ultimaModificacion": {
+                "properties": {
+                    "usuario": {"type": "text"},
+                    "fecha": {"type": "date"}
+                }
+            }
+        }   
+    }
+}
+```
+
+Creando el modelo
+
+
+```python
+PUT localhost:9200/platos/_mapping
+
+{
+    "properties": {
+        "estado": {"type": "keyword"}
+    }
+}
+```
+
+Modificando el modelo
+
+
+```python
+PUT localhost:9200/platos/_doc/1
+
+{
+    "nombre": "",
+    "descripcion": "",
+    "estado": "",
+    "pedidosUltimaHora": ,
+    "ultimaModificacion": {
+        "usuario": "",
+        "fecha": ""
+    }
+}
+```
+
+
+
+```python
+PUT localhost:9200/platos/_doc/1
+{
+  "nombre": "Bowl Picante",
+  "descripcion": "Pollo, salsa picante, frijoles, plátano y aguacate",
+  "estado": "activo",
+  "pedidosUltimaHora": 42,
+  "ultimaModificacion": {
+    "usuario": "rick@mail.com",
+    "fecha": "2020-02-19"
+  }
+}
+
+PUT localhost:9200/platos/_doc/2
+{
+  "nombre": "Ensaladísima",
+  "descripcion": "Aceitunas, cebolla, queso, tomate, aguacate (saludable)",
+  "estado": "activo",
+  "pedidosUltimaHora": 0,
+  "ultimaModificacion": {
+    "usuario": "rick@mail.com",
+    "fecha": "2020-01-22"
+  }
+}
+```
