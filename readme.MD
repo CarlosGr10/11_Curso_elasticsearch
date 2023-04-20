@@ -640,6 +640,7 @@ POST localhost:9200/restaurantes/_update/3
     "platos": [
       {
         "nombre": "Ensaladísima",
+
         "descripcion": "Aceitunas, cebolla, queso, pimentón, tomate cherry, aguacate. (vegetariano y saludable)",
         "estado": "activo",
         "pedidosUltimaHora": 0
@@ -655,6 +656,81 @@ POST localhost:9200/restaurantes/_update/3
 
 # Consultas de rango y agregaciones
 
-```python
+# Rangos
 
+```python
+{
+    "_source": ["nombre", "calificacion"],
+    "query": {
+        "range": {
+            "calificacion": {
+                "gt": 3.5,
+                "lte": 4.5
+            }
+        }
+    }
+}
 ```
+
+Una consulta de rango lo hace sobre un grupo de valores, lo hace con , numeros y fechas.
+
+- Con "_source": indicamos los campos a mostrar.
+
+- "gt" significa mayor que
+
+- "lt" significa menor que
+
+- La "e" al final ya sea de "gt" o "lt" significa "igual que"
+
+
+```python
+GET localhost:9200/restaurantes/_search
+
+{
+    "_source": ["nombre", "ultimaModificacion.fecha"],
+    "query": {
+        "range": {
+            "ultimaModificacion.fecha": {
+                "gte": "2020-01-15",
+                "lt": "2020-03-01"
+            }
+        }
+    }
+}
+```
+
+# Agregaciones
+
+Las agregaciones no son consultas, son metricas
+
+```python
+GET localhost:9200/restaurantes/_search
+
+{
+    "aggs":{
+        "calificacionPromedio": {"avg": {"field": "calificacion"}},
+        "calificacionMaximo":{"max": {"field": "calificacion"}},
+        "calificacionMinima":{"min": {"field": "calificacion"}}
+    }
+}
+```
+
+
+```python
+{
+    "aggs": {
+        "calificacionPromedio": {
+            "avg": {
+                "field": "calificacion",
+                "missing": 3.0
+            }
+        }
+    }
+}
+```
+
+"missing" es una forma de poner por defecto valores que no lo tienen
+
+
+# Proyecto: revisión final del directorio
+
