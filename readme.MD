@@ -653,4 +653,8 @@ POST localhost:9200/restaurantes/_update/3
 }
 ```
 
+# Consultas de rango y agregaciones
 
+```python
+
+```
