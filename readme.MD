@@ -734,3 +734,6 @@ GET localhost:9200/restaurantes/_search
 
 # Proyecto: revisión final del directorio
 
+# FINAL
+
+https://github.com/krsarmiento/contenido-curso-elastic/blob/clase-03-poner-a-correr-elasticsearch/clase.md
