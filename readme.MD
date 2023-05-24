@@ -739,6 +739,8 @@ Realizar una consulta compleja
 - todos los restaurantes de categoria de comida rapida y nachos
 
 ```python
+GET localhost:9200/restaurantes/_search
+
 {
   "query": {
     "bool": {
