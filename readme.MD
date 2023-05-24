@@ -734,6 +734,75 @@ GET localhost:9200/restaurantes/_search
 
 # Proyecto: revisión final del directorio
 
+Realizar una consulta compleja
+- Buscar los restaurantes del barrio centro y barrio occidental
+- todos los restaurantes de categoria de comida rapida y nachos
+
+```python
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "bool": {
+            "should": [
+              {
+                "match": {
+                  "direccion": "centro"
+                }
+              },
+              {
+                "match": {
+                  "direccion": "occidental"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "bool": {
+            "should": [
+              {
+                "nested": {
+                  "path": "categorias",
+                  "query": {
+                    "bool": {
+                      "must": {
+                        "term": {
+                          "categorias.nombre": "Comida Rápida"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "nested": {
+                  "path": "platos",
+                  "query": {
+                    "bool": {
+                      "must": {
+                        "match": {
+                          "platos.descripcion": "nachos"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
 # FINAL
+
+Podemos pasar elastic a python
+
+![](https://i.imgur.com/yRbMfld.png)
 
 https://github.com/krsarmiento/contenido-curso-elastic/blob/clase-03-poner-a-correr-elasticsearch/clase.md
